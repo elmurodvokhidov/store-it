@@ -13,7 +13,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Sidebar {...currentUser} />
 
             <section className='h-full flex flex-1 flex-col'>
-                <MobileNav />
+                <MobileNav {...currentUser} />
                 <Header />
 
                 <div className='main-content'>
