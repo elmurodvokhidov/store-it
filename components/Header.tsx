@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Search from "./Search";
 import FileUploader from "./FileUploader";
+import { signOutUser } from "@/lib/actions/user.actions";
 
 export default function Header() {
     return (
@@ -10,7 +11,10 @@ export default function Header() {
             <div className="header-wrapper">
                 <FileUploader />
 
-                <form action="">
+                <form action={async () => {
+                    "use server";
+                    await signOutUser();
+                }}>
                     <button type="submit" className="sign-out-button">
                         <Image
                             src="/assets/icons/logout.svg"
