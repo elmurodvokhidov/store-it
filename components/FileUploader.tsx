@@ -6,6 +6,10 @@ import { Button } from './ui/button';
 import { cn, convertFileToUrl, getFileType } from '@/lib/utils';
 import Image from 'next/image';
 import Thumbnail from './Thumbnail';
+import { MAX_FILE_SIZE } from '@/constants';
+import { useToast } from '@/hooks/use-toast';
+import { uploadFile } from '@/lib/actions/file.actions';
+import { usePathname } from 'next/navigation';
 
 interface Props {
     ownerId: string;
@@ -15,12 +19,44 @@ interface Props {
 
 export default function FileUploader({ ownerId, accountId, className }: Props) {
     const [files, setFiles] = useState<File[]>([]);
+    const { toast } = useToast();
+    const path = usePathname();
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setFiles(acceptedFiles);
-    }, []);
+        const uploadPromises = acceptedFiles.map(async (file) => {
+            if (file.size > MAX_FILE_SIZE) {
+                setFiles((prev) => prev.filter((f) => f.name !== file.name));
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+                return toast({
+                    description: (
+                        <p className='body-2 text-white'>
+                            <span className='font-semibold'>
+                                {file.name} is too large. Max file size is 50MB.
+                            </span>
+                        </p>
+                    ),
+                    className: "error-toast",
+                });
+            }
+
+            return uploadFile({
+                file,
+                ownerId,
+                path,
+                accountId,
+            })
+                .then((uploadedFile) => {
+                    if (uploadedFile) {
+                        setFiles((prev) => prev.filter((f) => f.name !== file.name));
+                    }
+                });
+        });
+
+        await Promise.all(uploadPromises);
+    }, [ownerId, accountId, path]);
+
+    const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
     const handleRemoveFile = (
         e: React.MouseEvent<HTMLImageElement, MouseEvent>,
